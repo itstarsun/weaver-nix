@@ -1,4 +1,5 @@
-{ buildGoModule
+{ lib
+, buildGoModule
 , fetchFromGitHub
 }:
 
@@ -18,4 +19,10 @@ buildGoModule rec {
   proxyVendor = true;
 
   doCheck = false;
+
+  meta = with lib; {
+    description = "Programming framework for writing and deploying cloud applications";
+    homepage = "https://serviceweaver.dev/";
+    license = licenses.asl20;
+  };
 }
