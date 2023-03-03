@@ -19,7 +19,8 @@
       flake.flakeModule = import ./flake-module.nix;
 
       perSystem = { config, ... }: {
-        packages.default = config.weaver.package;
+        packages.weaver = config.weaver.package;
+        packages.weaver-gke = config.weaver.gke.package;
       };
     };
 }
