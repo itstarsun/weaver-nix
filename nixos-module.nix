@@ -8,6 +8,20 @@
       let
         cfg = config.services.weaver;
 
+        mkService = args:
+          recursiveUpdate
+            {
+              wantedBy = [ "multi-user.target" ];
+              after = [ "network.target" ];
+              serviceConfig = {
+                Restart = "always";
+                RestartSec = "10s";
+                User = cfg.user;
+                Group = cfg.group;
+              };
+            }
+            args;
+
         mkDeploymentService = name: deployment:
           let
             configfile = pkgs.writeText "weaver.toml" ''
@@ -16,16 +30,8 @@
               binary = "${deployment.binary}"
             '';
           in
-          {
-            wantedBy = [ "multi-user.target" ];
-            after = [ "network.target" ];
-            serviceConfig = {
-              ExecStart = "${cfg.package}/bin/weaver multi deploy ${configfile}";
-              Restart = "always";
-              RestartSec = "10s";
-              User = cfg.user;
-              Group = cfg.group;
-            };
+          mkService {
+            serviceConfig.ExecStart = "${cfg.package}/bin/weaver multi deploy ${configfile}";
           };
       in
 
@@ -138,29 +144,19 @@
             };
 
             users.groups.weaver = mkIf (cfg.group == "weaver") { };
-          }
 
-          (mkIf cfg.dashboard.enable {
-            systemd.services.weaver-dashboard = {
-              wantedBy = [ "multi-user.target" ];
-              after = [ "network.target" ];
-              serviceConfig = {
-                ExecStart = "${cfg.package}/bin/weaver multi dashboard --host ${cfg.dashboard.host} --port ${toString cfg.dashboard.port}";
-                Restart = "always";
-                RestartSec = "10s";
-                User = cfg.user;
-                Group = cfg.group;
-              };
-            };
-          })
-
-          {
             systemd.services = mapAttrs'
               (name: deployment:
                 nameValuePair "weaver-deployment-${name}" (mkDeploymentService name deployment)
               )
               cfg.deployments;
           }
+
+          (mkIf cfg.dashboard.enable {
+            systemd.services.weaver-dashboard = mkService {
+              serviceConfig.ExecStart = "${cfg.package}/bin/weaver multi dashboard --host ${cfg.dashboard.host} --port ${toString cfg.dashboard.port}";
+            };
+          })
         ]);
       }
     );
