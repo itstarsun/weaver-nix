@@ -31,6 +31,10 @@
               inherit (lib) getExe;
 
               hello = pkgs.callPackage ./tests/hello { };
+
+              hello-delayed = pkgs.writeShellScript "hello-delayed" ''
+                sleep 3 && ${getExe hello}
+              '';
             in
             {
               imports = [
@@ -46,12 +50,16 @@
                   hello = {
                     binary = getExe hello;
                   };
+
+                  hello-delayed = {
+                    binary = hello-delayed;
+                  };
                 };
               };
             };
 
           # TODO: Test that the deployment actually appear in the dashboard.
-          # TODO: Test failure deployment?
+          # TODO: Manually restarting weaver-deployment-hello-delayed shouldn't be necessary.
           testScript = ''
             machine.start()
             machine.wait_for_unit("default.target")
@@ -60,6 +68,12 @@
             machine.wait_until_succeeds("curl -s http://localhost:27333")
 
             machine.wait_for_unit("weaver-deployment-hello.service")
+            machine.wait_until_succeeds("curl -s http://localhost:8080")
+
+            machine.systemctl("stop weaver-deployment-hello.service")
+            machine.systemctl("restart weaver-deployment-hello-delayed.service")
+
+            machine.wait_for_unit("weaver-deployment-hello-delayed.service")
             machine.wait_until_succeeds("curl -s http://localhost:8080")
           '';
         };
