@@ -26,32 +26,41 @@
         checks.weaver = pkgs.nixosTest {
           name = "weaver";
 
-          nodes.machine = { pkgs, ... }: {
-            imports = [
-              inputs.self.nixosModules.weaver
-            ];
+          nodes.machine = { lib, pkgs, ... }:
+            let
+              inherit (lib) getExe;
 
-            services.weaver = {
-              enable = true;
+              hello = pkgs.callPackage ./tests/hello { };
+            in
+            {
+              imports = [
+                inputs.self.nixosModules.weaver
+              ];
 
-              dashboard.enable = true;
+              services.weaver = {
+                enable = true;
 
-              deployments = {
-                invalid = {
-                  binary = "${pkgs.hello}/bin/hello";
+                dashboard.enable = true;
+
+                deployments = {
+                  hello = {
+                    binary = getExe hello;
+                  };
                 };
               };
             };
-          };
 
+          # TODO: Test that the deployment actually appear in the dashboard.
+          # TODO: Test failure deployment?
           testScript = ''
             machine.start()
             machine.wait_for_unit("default.target")
 
             machine.wait_for_unit("weaver-dashboard.service")
-            machine.succeed("curl http://localhost:27333")
+            machine.wait_until_succeeds("curl -s http://localhost:27333")
 
-            # TODO: Test invalid deployment?
+            machine.wait_for_unit("weaver-deployment-hello.service")
+            machine.wait_until_succeeds("curl -s http://localhost:8080")
           '';
         };
       };
