@@ -36,6 +36,10 @@
                 sleep 3 && ${getExe hello} $@
               '';
 
+              weaver-multi-wrapper = pkgs.writeShellScriptBin "weaver-multi-wrapper" ''
+                ${config.weaver.package}/bin/weaver multi $@
+              '';
+
               mkDeployment = binary: {
                 binary = binary;
                 args = [ "these" "are" "command" "line" "arguments" ];
@@ -61,6 +65,11 @@
                 enable = true;
 
                 dashboard.enable = true;
+
+                deployer = {
+                  name = "multi-wrapper";
+                  package = weaver-multi-wrapper;
+                };
 
                 deployments = {
                   hello = mkDeployment (getExe hello);
