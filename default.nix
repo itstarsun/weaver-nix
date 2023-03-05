@@ -1,6 +1,7 @@
 { lib
 , buildGoModule
 , fetchFromGitHub
+, fetchpatch
 }:
 
 buildGoModule rec {
@@ -13,6 +14,14 @@ buildGoModule rec {
     rev = "v${version}";
     sha256 = "sha256-dO4L2GP3KI4Y4OOOXXu/bnzJ1GEfZ7Z8cHTiE4HLEBo=";
   };
+
+  patches = [
+    # TODO: remove once the next release is out.
+    (fetchpatch {
+      url = "https://github.com/ServiceWeaver/weaver/commit/35727ae307c392d27cadfbf5302d56a3e76977ab.patch";
+      sha256 = "sha256-++gFFDHBxwegpiNxC2YmiDVrKXNIXotFxcTGndOIlEs=";
+    })
+  ];
 
   subPackages = [ "cmd/*" ];
 
