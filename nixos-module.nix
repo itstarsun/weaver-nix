@@ -74,7 +74,7 @@
                 (types.submodule {
                   options = {
                     binary = mkOption {
-                      type = types.str;
+                      type = types.path;
                       description = lib.mdDoc ''
                         Compiled Service Weaver application. The binary path, if not absolute,
                         should be relative to the directory that contains the config file.
