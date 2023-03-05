@@ -49,6 +49,17 @@
                 deployments = {
                   hello = {
                     binary = getExe hello;
+                    args = [ "these" "are" "command" "line" "arguments" ];
+                    env = {
+                      PUT = "your";
+                      ENV = "vars";
+                      HERE = "";
+                    };
+                    colocate = [
+                      [ "main/Rock" "main/Paper" "main/Scissors" ]
+                      [ "github.com/example/sandy/PeanutButter" "github.com/example/sandy/Jelly" ]
+                    ];
+                    rollout = "1m";
                   };
 
                   hello-delayed = {

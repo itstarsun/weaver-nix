@@ -24,11 +24,23 @@
 
         mkDeploymentService = name: deployment:
           let
-            configfile = pkgs.writeText "weaver.toml" ''
+            configfile = pkgs.writeText "weaver.toml" (''
               [serviceweaver]
               name = "${name}"
               binary = "${deployment.binary}"
-            '';
+            ''
+            + optionalString (deployment.args != [ ]) ''
+              args = ${builtins.toJSON deployment.args}
+            ''
+            + optionalString (deployment.env != { }) ''
+              env = ${builtins.toJSON (mapAttrsToList (name: value: "${name}=${value}") deployment.env)}
+            ''
+            + optionalString (deployment.colocate != [ ]) ''
+              colocate = ${builtins.toJSON deployment.colocate}
+            ''
+            + optionalString (deployment.rollout != null) ''
+              rollout = ${builtins.toJSON deployment.rollout}
+            '');
           in
           mkService {
             serviceConfig.ExecStart = "${cfg.package}/bin/weaver multi deploy ${configfile}";
@@ -162,3 +174,4 @@
     );
   };
 }
+
