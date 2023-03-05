@@ -58,5 +58,63 @@ with lib;
         See the GKE Deployments section for more information on rollouts.
       '';
     };
+
+    gke = mkOption {
+      type = types.nullOr (types.submodule {
+        options = {
+          project = mkOption {
+            type = types.nullOr types.str;
+            default = null;
+            example = "my-google-cloud-project";
+            description = lib.mdDoc ''
+              Name of the Google Cloud Project in which to deploy the Service Weaver application.
+              If absent, the currently active project is used (i.e. gcloud config get-value project)
+            '';
+          };
+
+          account = mkOption {
+            type = types.str;
+            example = "my_account@gmail.com";
+            description = lib.mdDoc ''
+              Google Cloud account used to deploy the Service Weaver application.
+              If absent, the currently active account is used (i.e. gcloud config get-value account).
+            '';
+          };
+
+          regions = mkOption {
+            type = types.listOf types.str;
+            default = [ ];
+            example = [ "us-west1" "us-east1" ];
+            description = lib.mdDoc ''
+              Regions in which the Service Weaver application should be deployed.
+              Defaults to ["us-west1"].
+            '';
+          };
+
+          publicListener = mkOption {
+            type = types.listOf (types.submodule {
+              options = {
+                name = mkOption {
+                  type = types.str;
+                };
+
+                hostname = mkOption {
+                  type = types.str;
+                };
+              };
+            });
+            default = [ ];
+            example = [
+              { name = "cat"; hostname = "cat.com"; }
+              { name = "hat"; hostname = "hat.gg"; }
+            ];
+            description = lib.mdDoc ''
+              The application's public listeners along with their corresponding hostnames.
+            '';
+          };
+        };
+      });
+      default = null;
+    };
   };
 }
