@@ -33,13 +33,29 @@
               hello = pkgs.callPackage ./tests/hello { };
 
               hello-delayed = pkgs.writeShellScript "hello-delayed" ''
-                sleep 3 && ${getExe hello}
+                sleep 3 && ${getExe hello} $@
               '';
+
+              mkDeployment = binary: {
+                binary = binary;
+                args = [ "these" "are" "command" "line" "arguments" ];
+                env = {
+                  PUT = "your";
+                  ENV = "vars";
+                  HERE = "";
+                };
+                colocate = [
+                  [ "github.com/itstarsun/weaver-nix/tests/hello/Service" ]
+                ];
+                rollout = "1m";
+              };
             in
             {
               imports = [
                 inputs.self.nixosModules.weaver
               ];
+
+              virtualisation.graphics = false;
 
               services.weaver = {
                 enable = true;
@@ -47,24 +63,8 @@
                 dashboard.enable = true;
 
                 deployments = {
-                  hello = {
-                    binary = getExe hello;
-                    args = [ "these" "are" "command" "line" "arguments" ];
-                    env = {
-                      PUT = "your";
-                      ENV = "vars";
-                      HERE = "";
-                    };
-                    colocate = [
-                      [ "main/Rock" "main/Paper" "main/Scissors" ]
-                      [ "github.com/example/sandy/PeanutButter" "github.com/example/sandy/Jelly" ]
-                    ];
-                    rollout = "1m";
-                  };
-
-                  hello-delayed = {
-                    binary = hello-delayed;
-                  };
+                  hello = mkDeployment (getExe hello);
+                  hello-delayed = mkDeployment hello-delayed;
                 };
               };
             };
@@ -72,21 +72,34 @@
           # TODO: Test that the deployment actually appear in the dashboard.
           # TODO: Manually restarting weaver-deployment-hello-delayed shouldn't be necessary.
           testScript = ''
-            machine.start()
-            machine.wait_for_unit("default.target")
+            import json
 
-            machine.wait_for_unit("weaver-dashboard.service")
-            machine.wait_until_succeeds("curl -s http://localhost:27333")
+            start_all()
 
-            machine.wait_for_unit("weaver-deployment-hello.service")
-            machine.wait_until_succeeds("curl -s http://localhost:8080")
+            machine.wait_for_open_port(27333)
+            machine.succeed("curl http://localhost:27333")
+
+            machine.wait_for_open_port(8080)
+            machine.succeed("curl http://localhost:8080")
 
             machine.systemctl("stop weaver-deployment-hello.service")
             machine.systemctl("restart weaver-deployment-hello-delayed.service")
 
-            machine.wait_for_unit("weaver-deployment-hello-delayed.service")
-            machine.wait_until_succeeds("curl -s http://localhost:8080")
+            machine.wait_for_open_port(8080)
+            machine.succeed("curl http://localhost:8080")
+
+            args = json.loads(machine.succeed("curl http://localhost:8080/args"))
+            assert args == ["these", "are", "command", "line", "arguments"]
+
+            env = json.loads(machine.succeed("curl http://localhost:8080/env"))
+            assert set(env).issuperset([
+              ("PUT=your"),
+              ("ENV=vars"),
+              ("HERE="),
+            ])
           '';
+
+          meta.timeout = 120;
         };
       };
     };

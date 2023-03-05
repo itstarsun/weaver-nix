@@ -2,7 +2,11 @@ module github.com/itstarsun/weaver-nix/tests/hello
 
 go 1.19
 
-require github.com/ServiceWeaver/weaver v0.1.1
+require (
+	github.com/ServiceWeaver/weaver v0.1.1
+	go.opentelemetry.io/otel v1.13.0
+	go.opentelemetry.io/otel/trace v1.13.0
+)
 
 require (
 	github.com/BurntSushi/toml v1.2.0 // indirect
@@ -19,10 +23,8 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.16 // indirect
 	github.com/pkg/browser v0.0.0-20210911075715-681adbf594b8 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
-	go.opentelemetry.io/otel v1.13.0 // indirect
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.7.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.11.1 // indirect
-	go.opentelemetry.io/otel/trace v1.13.0 // indirect
 	golang.org/x/exp v0.0.0-20230206171751-46f607a40771 // indirect
 	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
